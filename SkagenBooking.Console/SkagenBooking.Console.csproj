@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SkagenBooking.Application\SkagenBooking.Application.csproj" />
+    <ProjectReference Include="..\SkagenBooking.Infrastructure\SkagenBooking.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
