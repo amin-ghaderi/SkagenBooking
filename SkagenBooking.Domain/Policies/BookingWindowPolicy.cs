@@ -1,7 +1,7 @@
-namespace SkagenBooking.Application.Policies;
+namespace SkagenBooking.Core.Policies;
 
 /// <summary>
-/// Defines time-window rules for check-in, check-out and late-arrival handling.
+/// Domain policy that defines time-window rules for check-in, check-out and late-arrival handling.
 /// </summary>
 public sealed class BookingWindowPolicy
 {
@@ -13,3 +13,4 @@ public sealed class BookingWindowPolicy
     public bool IsValidCheckIn(TimeOnly checkInTime) => checkInTime >= CheckInStart && checkInTime <= CheckInEnd;
     public bool IsValidCheckOut(TimeOnly checkOutTime) => checkOutTime <= CheckOutDeadline;
 }
+

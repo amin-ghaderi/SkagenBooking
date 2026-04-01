@@ -1,7 +1,9 @@
+using System.Threading;
 using SkagenBooking.Core.Enums;
 using SkagenBooking.Core.Events;
 using SkagenBooking.Core.ValueObjects;
 using SkagenBooking.Core.Common;
+using SkagenBooking.Core.Policies;
 
 namespace SkagenBooking.Core.Entities;
 
@@ -10,6 +12,8 @@ namespace SkagenBooking.Core.Entities;
 /// </summary>
 public class Booking : AggregateRoot
 {
+    private static int _nextId;
+
     public int Id { get; private set; }
     public int PropertyId { get; private set; }
 
@@ -24,6 +28,7 @@ public class Booking : AggregateRoot
 
     private Booking(int propertyId, int roomId, DateRange dateRange, int guestCount, bool needsParking, TimeOnly? estimatedArrivalTime)
     {
+        Id = Interlocked.Increment(ref _nextId);
         PropertyId = propertyId;
         RoomId = roomId;
         DateRange = dateRange;
@@ -34,35 +39,49 @@ public class Booking : AggregateRoot
     }
 
     /// <summary>
-    /// Factory method that creates a new booking while enforcing domain invariants.
+    /// Attempts to create a booking aggregate while enforcing domain invariants and policies.
     /// </summary>
-    /// <param name="propertyId">Identifier of the property that owns the room.</param>
-    /// <param name="roomId">Identifier of the booked room.</param>
-    /// <param name="dateRange">Date range of the stay (check-in/check-out).</param>
-    /// <param name="guestCount">Number of guests included in the booking.</param>
-    /// <param name="needsParking">Whether the booking should reserve parking capacity.</param>
+    /// <param name="room">Room the guest wants to book.</param>
+    /// <param name="dateRange">Requested date range for the stay.</param>
+    /// <param name="guestCount">Number of guests.</param>
+    /// <param name="needsParking">Whether parking should be reserved.</param>
     /// <param name="isLateArrival">Whether the guest will arrive after the late-arrival threshold.</param>
-    /// <param name="estimatedArrivalTime">Estimated time of arrival when arriving late.</param>
-    /// <returns>The newly created booking aggregate.</returns>
-    public static Booking Create(
-        int propertyId,
-        int roomId,
+    /// <param name="estimatedArrivalTime">Estimated arrival time when arriving late.</param>
+    /// <param name="policy">Booking time-window policy.</param>
+    /// <param name="currentDate">Current date used to prevent bookings in the past.</param>
+    /// <returns>Result containing either the created booking or an error message.</returns>
+    public static BookingCreationResult TryCreate(
+        Room room,
         DateRange dateRange,
         int guestCount,
         bool needsParking,
         bool isLateArrival,
-        TimeOnly? estimatedArrivalTime)
+        TimeOnly? estimatedArrivalTime,
+        BookingWindowPolicy policy,
+        DateTime currentDate)
     {
         if (guestCount <= 0)
-            throw new ArgumentException("Guest count must be greater than zero.");
+            return BookingCreationResult.Failure("Guest count must be greater than zero.");
+
+        if (guestCount > room.Capacity)
+            return BookingCreationResult.Failure("Guest count exceeds room capacity.");
+
+        if (dateRange.CheckIn.Date < currentDate.Date)
+            return BookingCreationResult.Failure("Check-in date cannot be in the past.");
+
+        if (!policy.IsValidCheckIn(TimeOnly.FromDateTime(dateRange.CheckIn)))
+            return BookingCreationResult.Failure("Check-in time must be between 14:00 and 22:30.");
+
+        if (!policy.IsValidCheckOut(TimeOnly.FromDateTime(dateRange.CheckOut)))
+            return BookingCreationResult.Failure("Check-out time must be no later than 12:00.");
 
         // Business rule from project statement: late arrivals after 20:00 should provide ETA.
         if (isLateArrival && estimatedArrivalTime is null)
-            throw new ArgumentException("Estimated arrival time is required for arrivals after 20:00.");
+            return BookingCreationResult.Failure("Estimated arrival time is required for arrivals after 20:00.");
 
-        var booking = new Booking(propertyId, roomId, dateRange, guestCount, needsParking, estimatedArrivalTime);
-        booking.Raise(new BookingCreatedDomainEvent(propertyId, roomId));
-        return booking;
+        var booking = new Booking(room.PropertyId, room.Id, dateRange, guestCount, needsParking, estimatedArrivalTime);
+        booking.Raise(new BookingCreatedDomainEvent(room.PropertyId, room.Id));
+        return BookingCreationResult.Success(booking);
     }
 
     /// <summary>

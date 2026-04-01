@@ -1,6 +1,5 @@
 using SkagenBooking.Core.Entities;
 using SkagenBooking.Core.Interfaces;
-using SkagenBooking.Core.ValueObjects;
 
 namespace SkagenBooking.Infrastructure.Repositories;
 
@@ -23,11 +22,5 @@ public class InMemoryBookingRepository : IBookingAggregateRepository
             .Where(b => b.RoomId == roomId)
             .ToList();
         return Task.FromResult(bookings);
-    }
-
-    public Task<bool> ExistsOverlapAsync(int roomId, DateRange requestedRange, CancellationToken cancellationToken)
-    {
-        var overlaps = _bookings.Any(b => b.RoomId == roomId && b.DateRange.Overlaps(requestedRange));
-        return Task.FromResult(overlaps);
     }
 }

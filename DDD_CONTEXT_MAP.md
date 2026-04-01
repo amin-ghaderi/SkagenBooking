@@ -65,20 +65,25 @@ the same `Domain` project, but conceptually they can be separated as follows.
 **Responsibilities**
 
 - Managing parking capacity per property:
-  - Current rule: maximum two free parking spots per property.
+  - Current rule: maximum parking spots per property, defined on `Property`.
 - Answering the question:
   - “Is there a free parking spot for this property in the requested date range?”
 
-**Current implementation**
+**Aggregate Root**
 
-- No explicit aggregate yet; implemented with `InMemoryParkingRepository` and simple counting.
+- `ParkingAllocation`
 
-**Future Aggregate Root idea**
+**Description**
 
-- `ParkingSlotAllocation` (or similar) that:
-  - is associated with a `Property`,
-  - stores parking reservations per date range,
-  - protects against overbooking parking capacity.
+- `ParkingAllocation`:
+  - Represents a parking reservation linked to a `Booking`.
+  - Contains:
+    - `BookingId`
+    - `PropertyId`
+    - `DateRange`
+  - Rules:
+    - Parking allocations are created only from `Booking`.
+    - No allocation exists without a `Booking`.
 
 ---
 
@@ -162,3 +167,11 @@ The Application layer:
 This map is intended to make it easier for a growing team to understand where
 each piece of behaviour belongs and how responsibilities are divided across
 bounded contexts and layers.
+
+---
+
+## 5. Key Domain Principles
+
+- Booking is the main aggregate for reservations.
+- ParkingAllocation is derived from Booking; no ParkingAllocation exists without a Booking.
+- Domain services are the single source of business rules; repositories are data-only.

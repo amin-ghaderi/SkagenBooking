@@ -1,7 +1,7 @@
 using SkagenBooking.Application.Bookings.Commands.CreateBooking;
 using SkagenBooking.Application.Bookings.Events;
 using SkagenBooking.Application.Common.DomainEvents;
-using SkagenBooking.Application.Policies;
+using SkagenBooking.Core.Policies;
 using SkagenBooking.Core.Services;
 using SkagenBooking.Infrastructure.Persistence;
 using SkagenBooking.Infrastructure.Repositories;
@@ -17,12 +17,26 @@ public class CreateBookingUseCaseIntegrationTests
     {
         var pricing = new BasicPricingService();
         var policy = new BookingWindowPolicy();
+        var availabilityService = new AvailabilityService();
+        var parkingAvailabilityService = new ParkingAvailabilityService();
+        var propertyRepo = new InMemoryPropertyRepository();
         var dispatcher = new InMemoryDomainEventDispatcher();
         dispatcher.Register(new BookingCreatedDomainEventHandler());
         var outbox = new InMemoryOutbox();
         var uow = new InMemoryUnitOfWork();
 
-        return new CreateBookingUseCase(roomRepo, bookingRepo, parkingRepo, pricing, policy, dispatcher, outbox, uow);
+        return new CreateBookingUseCase(
+            roomRepo,
+            bookingRepo,
+            parkingRepo,
+            propertyRepo,
+            pricing,
+            policy,
+            availabilityService,
+            parkingAvailabilityService,
+            dispatcher,
+            outbox,
+            uow);
     }
 
     [Fact]

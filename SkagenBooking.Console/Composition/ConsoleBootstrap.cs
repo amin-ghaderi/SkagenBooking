@@ -2,9 +2,9 @@ using SkagenBooking.Application.Bookings.Commands.CreateBooking;
 using SkagenBooking.Application.Bookings.Events;
 using SkagenBooking.Application.Bookings.Queries.GetBookings;
 using SkagenBooking.Application.Common.DomainEvents;
-using SkagenBooking.Application.Policies;
 using SkagenBooking.Application.Rooms.Queries.GetRooms;
 using SkagenBooking.Console.Application;
+using SkagenBooking.Core.Policies;
 using SkagenBooking.Core.Services;
 using SkagenBooking.Infrastructure.Persistence;
 using SkagenBooking.Infrastructure.Repositories;
@@ -22,12 +22,15 @@ public static class ConsoleBootstrap
 
         // Infrastructure adapters (in-memory for now)
         var roomRepo = new InMemoryRoomRepository();
+        var propertyRepo = new InMemoryPropertyRepository();
         var bookingRepo = new InMemoryBookingRepository();
-        var parkingRepo = new InMemoryParkingRepository();
+        var parkingAllocationRepo = new InMemoryParkingRepository();
 
         // Domain services
         var pricingService = new BasicPricingService();
         var bookingWindowPolicy = new BookingWindowPolicy();
+        var availabilityService = new AvailabilityService();
+        var parkingAvailabilityService = new ParkingAvailabilityService();
         var domainEventDispatcher = new InMemoryDomainEventDispatcher();
         domainEventDispatcher.Register(new BookingCreatedDomainEventHandler());
         var outbox = new InMemoryOutbox();
@@ -39,9 +42,12 @@ public static class ConsoleBootstrap
         var createBookingUseCase = new CreateBookingUseCase(
             roomRepo,
             bookingRepo,
-            parkingRepo,
+            parkingAllocationRepo,
+            propertyRepo,
             pricingService,
             bookingWindowPolicy,
+            availabilityService,
+            parkingAvailabilityService,
             domainEventDispatcher,
             outbox,
             unitOfWork);

@@ -1,15 +1,27 @@
+using SkagenBooking.Core.Entities;
 using SkagenBooking.Core.Interfaces;
 
 namespace SkagenBooking.Infrastructure.Repositories;
 
-public class InMemoryParkingRepository : IParkingRepository
+/// <summary>
+/// In-memory implementation of parking allocation repository.
+/// </summary>
+public class InMemoryParkingRepository : IParkingAllocationRepository
 {
-    private const int ParkingCapacityPerProperty = 2;
-    private readonly Dictionary<int, int> _reservedSlots = new();
+    private readonly List<ParkingAllocation> _allocations = new();
 
-    public Task<bool> HasFreeSlotAsync(int propertyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<ParkingAllocation>> GetByPropertyAsync(int propertyId, CancellationToken cancellationToken)
     {
-        _reservedSlots.TryGetValue(propertyId, out var reserved);
-        return Task.FromResult(reserved < ParkingCapacityPerProperty);
+        IReadOnlyList<ParkingAllocation> result = _allocations
+            .Where(a => a.PropertyId == propertyId)
+            .ToList();
+
+        return Task.FromResult(result);
+    }
+
+    public Task AddAsync(ParkingAllocation allocation, CancellationToken cancellationToken)
+    {
+        _allocations.Add(allocation);
+        return Task.CompletedTask;
     }
 }

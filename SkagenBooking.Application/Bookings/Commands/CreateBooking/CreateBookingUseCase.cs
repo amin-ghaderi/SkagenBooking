@@ -1,23 +1,28 @@
 using SkagenBooking.Application.Common.DomainEvents;
-using SkagenBooking.Application.Policies;
 using SkagenBooking.Application.Abstractions;
+using SkagenBooking.Core.Common;
 using SkagenBooking.Core.Entities;
 using SkagenBooking.Core.Interfaces;
+using SkagenBooking.Core.Policies;
 using SkagenBooking.Core.Services;
 using SkagenBooking.Core.ValueObjects;
 
 namespace SkagenBooking.Application.Bookings.Commands.CreateBooking;
 
 /// <summary>
-/// Application use case that validates input and creates a booking aggregate.
+/// Application use case that orchestrates booking creation while delegating
+/// business validation to the domain layer.
 /// </summary>
 public sealed class CreateBookingUseCase : ICreateBookingUseCase
 {
     private readonly IRoomRepository _roomRepository;
     private readonly IBookingAggregateRepository _bookingRepository;
-    private readonly IParkingRepository _parkingRepository;
+    private readonly IParkingAllocationRepository _parkingAllocationRepository;
+    private readonly IPropertyRepository _propertyRepository;
     private readonly IPricingService _pricingService;
     private readonly BookingWindowPolicy _bookingWindowPolicy;
+    private readonly IAvailabilityService _availabilityService;
+    private readonly IParkingAvailabilityService _parkingAvailabilityService;
     private readonly IDomainEventDispatcher _domainEventDispatcher;
     private readonly IOutbox _outbox;
     private readonly IUnitOfWork _unitOfWork;
@@ -25,18 +30,24 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
     public CreateBookingUseCase(
         IRoomRepository roomRepository,
         IBookingAggregateRepository bookingRepository,
-        IParkingRepository parkingRepository,
+        IParkingAllocationRepository parkingAllocationRepository,
+        IPropertyRepository propertyRepository,
         IPricingService pricingService,
         BookingWindowPolicy bookingWindowPolicy,
+        IAvailabilityService availabilityService,
+        IParkingAvailabilityService parkingAvailabilityService,
         IDomainEventDispatcher domainEventDispatcher,
         IOutbox outbox,
         IUnitOfWork unitOfWork)
     {
         _roomRepository = roomRepository;
         _bookingRepository = bookingRepository;
-        _parkingRepository = parkingRepository;
+        _parkingAllocationRepository = parkingAllocationRepository;
+        _propertyRepository = propertyRepository;
         _pricingService = pricingService;
         _bookingWindowPolicy = bookingWindowPolicy;
+        _availabilityService = availabilityService;
+        _parkingAvailabilityService = parkingAvailabilityService;
         _domainEventDispatcher = domainEventDispatcher;
         _outbox = outbox;
         _unitOfWork = unitOfWork;
@@ -50,56 +61,69 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
             return new CreateBookingResult { IsCreated = false, Message = "Room not found for selected property." };
         }
 
-        if (command.CheckInDate.Date < DateTime.Today)
+        var property = await _propertyRepository.GetByIdAsync(command.PropertyId, cancellationToken);
+        if (property is null)
         {
-            return new CreateBookingResult
-            {
-                IsCreated = false,
-                Message = "Check-in date cannot be in the past."
-            };
-        }
-
-        if (command.GuestCount > room.Capacity)
-        {
-            return new CreateBookingResult { IsCreated = false, Message = "Guest count exceeds room capacity." };
+            return new CreateBookingResult { IsCreated = false, Message = "Property not found." };
         }
 
         var range = new DateRange(command.CheckInDate, command.CheckOutDate);
-        if (!_bookingWindowPolicy.IsValidCheckIn(TimeOnly.FromDateTime(command.CheckInDate)))
-        {
-            return new CreateBookingResult { IsCreated = false, Message = "Check-in time must be between 14:00 and 22:30." };
-        }
 
-        if (!_bookingWindowPolicy.IsValidCheckOut(TimeOnly.FromDateTime(command.CheckOutDate)))
-        {
-            return new CreateBookingResult { IsCreated = false, Message = "Check-out time must be no later than 12:00." };
-        }
-
-        var overlaps = await _bookingRepository.ExistsOverlapAsync(room.Id, range, cancellationToken);
-        if (overlaps)
+        var existingBookings = await _bookingRepository.GetByRoomAsync(room.Id, cancellationToken);
+        var isAvailable = _availabilityService.IsRoomAvailable(room, range, existingBookings.ToList());
+        if (!isAvailable)
         {
             return new CreateBookingResult { IsCreated = false, Message = "Room is not available for selected dates." };
         }
 
         if (command.NeedsParking)
         {
-            var hasParking = await _parkingRepository.HasFreeSlotAsync(command.PropertyId, command.CheckInDate, command.CheckOutDate, cancellationToken);
+            var existingAllocations = await _parkingAllocationRepository
+                .GetByPropertyAsync(command.PropertyId, cancellationToken);
+
+            var hasParking = _parkingAvailabilityService.HasFreeSlot(
+                existingAllocations,
+                range,
+                property.ParkingCapacity);
+
             if (!hasParking)
             {
-                return new CreateBookingResult { IsCreated = false, Message = "No parking slot available for selected dates." };
+                return new CreateBookingResult
+                {
+                    IsCreated = false,
+                    Message = "No parking slot available for selected dates."
+                };
             }
         }
 
-        var booking = Booking.Create(
-            command.PropertyId,
-            room.Id,
+        var creationResult = Booking.TryCreate(
+            room,
             range,
             command.GuestCount,
             command.NeedsParking,
             command.IsLateArrival,
-            command.EstimatedArrivalTime);
+            command.EstimatedArrivalTime,
+            _bookingWindowPolicy,
+            DateTime.Today);
+
+        if (!creationResult.IsSuccess)
+        {
+            return new CreateBookingResult
+            {
+                IsCreated = false,
+                Message = creationResult.Error
+            };
+        }
+
+        var booking = creationResult.Booking!;
 
         await _bookingRepository.AddAsync(booking, cancellationToken);
+
+        if (command.NeedsParking)
+        {
+            var allocation = ParkingAllocation.CreateFromBooking(booking);
+            await _parkingAllocationRepository.AddAsync(allocation, cancellationToken);
+        }
         await _outbox.EnqueueAsync(booking.DomainEvents, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _domainEventDispatcher.DispatchAsync(booking.DomainEvents, cancellationToken);

@@ -16,15 +16,15 @@ the responsibilities of each layer/project. The goals are:
 **Responsibilities**
 
 - Domain model:
-  - `Booking`, `Room`, `Property`, `Guest`, `ParkingSlot`
+  - `Booking`, `Room`, `Property`, `Guest`, `ParkingAllocation`
 - Value Objects:
   - `DateRange`, `Money`, `CheckInWindow`
 - Enums:
   - `BookingStatus`, `RoomType`
 - Domain ports (interfaces):
-  - `IBookingRepository`, `IRoomRepository`, `IParkingRepository`, `IPropertyRepository`
+  - `IBookingAggregateRepository`, `IRoomRepository`, `IParkingAllocationRepository`, `IPropertyRepository`
 - Domain services:
-  - `AvailabilityService`, `BasicPricingService`, `IAvailabilityService`, `IPricingService`
+  - `AvailabilityService`, `ParkingAvailabilityService`, `BasicPricingService`, `IAvailabilityService`, `IParkingAvailabilityService`, `IPricingService`
 - DDD building blocks:
   - `AggregateRoot`, `IDomainEvent`, `BookingCreatedDomainEvent`
 
@@ -71,7 +71,8 @@ the responsibilities of each layer/project. The goals are:
   - In‑memory repositories:
     - `InMemoryRoomRepository`
     - `InMemoryBookingRepository`
-    - `InMemoryParkingRepository`
+    - `InMemoryParkingRepository` (implements `IParkingAllocationRepository`)
+    - `InMemoryPropertyRepository` (implements `IPropertyRepository`)
 - Persistence skeleton:
   - `OutboxMessage`, `InMemoryOutbox`
   - `InMemoryUnitOfWork`
@@ -136,11 +137,10 @@ the responsibilities of each layer/project. The goals are:
    - `CreateBookingUseCase`:
      - Loads the room via `IRoomRepository`.
      - Checks room capacity against `GuestCount`.
-     - Validates dates using `BookingWindowPolicy` and `DateRange`.
-     - Checks for overlapping bookings via `IBookingRepository.ExistsOverlapAsync`.
-     - Checks parking availability via `IParkingRepository` when required.
-     - Creates the aggregate via `Booking.Create(...)`.
-     - Persists the booking via `IBookingRepository.AddAsync`.
+     - Validates dates and other intrinsic rules using `BookingWindowPolicy`, `DateRange`, and `Booking.TryCreate(...)`.
+     - Loads existing bookings and checks for overlaps via `AvailabilityService` (using data from `IBookingAggregateRepository`).
+     - Loads parking allocations via `IParkingAllocationRepository` and checks parking availability via `ParkingAvailabilityService` when required.
+     - Persists the booking via `IBookingAggregateRepository.AddAsync`.
      - Enqueues and dispatches domain events (Outbox + dispatcher).
 3. **Domain:**
    - `Booking` enforces its own invariants (guest count, late‑arrival ETA, status transitions).
@@ -174,3 +174,11 @@ The architecture has been shaped so further steps can be added without heavy ref
 
 This document is meant to help any new developer understand, within a few minutes,
 where each responsibility lives and how the pieces of the system fit together.
+
+---
+
+## 5. Key Domain Principles
+
+- Booking is the main aggregate for reservations.
+- ParkingAllocation is derived from Booking; no ParkingAllocation exists without a Booking.
+- Domain services are the single source of business rules; repositories are data-only.
