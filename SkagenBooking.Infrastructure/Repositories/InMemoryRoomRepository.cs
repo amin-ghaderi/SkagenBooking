@@ -1,6 +1,7 @@
 using SkagenBooking.Core.Entities;
 using SkagenBooking.Core.Enums;
 using SkagenBooking.Core.Interfaces;
+using SkagenBooking.Core.ValueObjects;
 
 namespace SkagenBooking.Infrastructure.Repositories;
 
@@ -11,19 +12,22 @@ public class InMemoryRoomRepository : IRoomRepository
 {
     private readonly List<Room> _rooms = new()
     {
-        new Room(1, RoomType.Single, 1),
-        new Room(2, RoomType.Double, 2),
-        new Room(3, RoomType.Double, 2),
-        new Room(4, RoomType.Family, 3)
+        new Room(1, 1, RoomType.Single, 1, new Money(550m, "DKK")),
+        new Room(2, 1, RoomType.Double, 2, new Money(700m, "DKK")),
+        new Room(3, 1, RoomType.Double, 2, new Money(765m, "DKK")),
+        new Room(4, 1, RoomType.Family, 3, new Money(850m, "DKK"))
     };
 
-    public List<Room> GetAll()
+    public Task<IReadOnlyList<Room>> GetAllAsync(int? propertyId, CancellationToken cancellationToken)
     {
-        return _rooms;
+        IReadOnlyList<Room> rooms = propertyId.HasValue
+            ? _rooms.Where(r => r.PropertyId == propertyId.Value).ToList()
+            : _rooms;
+        return Task.FromResult(rooms);
     }
 
-    public Room? GetById(int id)
+    public Task<Room?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
-        return _rooms.FirstOrDefault(r => r.Id == id);
+        return Task.FromResult(_rooms.FirstOrDefault(r => r.Id == id));
     }
 }

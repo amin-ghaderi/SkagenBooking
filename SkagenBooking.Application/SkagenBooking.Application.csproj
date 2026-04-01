@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SkagenBooking.Core\SkagenBooking.Core.csproj" />
+    <ProjectReference Include="..\SkagenBooking.Domain\SkagenBooking.Domain.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
