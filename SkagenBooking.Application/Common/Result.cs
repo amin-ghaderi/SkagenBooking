@@ -1,5 +1,8 @@
 namespace SkagenBooking.Application.Common;
 
+/// <summary>
+/// Represents the outcome of an application operation (success or failure with an error).
+/// </summary>
 public sealed class Result
 {
     private Result(bool isSuccess, string? error)

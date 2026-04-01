@@ -11,6 +11,9 @@ using SkagenBooking.Infrastructure.Repositories;
 
 namespace SkagenBooking.Console.Composition;
 
+/// <summary>
+/// Composition root for the console application. Builds the object graph used by Program.cs.
+/// </summary>
 public static class ConsoleBootstrap
 {
     public static (ConsoleAppService appService, CancellationToken cancellationToken) Build()

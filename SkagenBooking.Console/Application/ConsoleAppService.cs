@@ -7,6 +7,9 @@ using SkagenBooking.Application.Rooms.Queries.GetRooms;
 
 namespace SkagenBooking.Console.Application;
 
+/// <summary>
+/// Facade over application use cases tailored for the console user interface.
+/// </summary>
 public sealed class ConsoleAppService
 {
     private readonly IGetRoomsUseCase _getRoomsUseCase;

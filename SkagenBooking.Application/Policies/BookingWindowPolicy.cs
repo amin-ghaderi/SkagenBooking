@@ -1,5 +1,8 @@
 namespace SkagenBooking.Application.Policies;
 
+/// <summary>
+/// Defines time-window rules for check-in, check-out and late-arrival handling.
+/// </summary>
 public sealed class BookingWindowPolicy
 {
     public TimeOnly CheckInStart { get; } = new(14, 0);

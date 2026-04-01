@@ -1,5 +1,8 @@
 namespace SkagenBooking.Core.Common;
 
+/// <summary>
+/// Base type for aggregate roots that can raise domain events.
+/// </summary>
 public abstract class AggregateRoot
 {
     private readonly List<IDomainEvent> _domainEvents = new();

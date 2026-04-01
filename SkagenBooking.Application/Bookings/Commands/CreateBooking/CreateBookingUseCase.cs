@@ -8,6 +8,9 @@ using SkagenBooking.Core.ValueObjects;
 
 namespace SkagenBooking.Application.Bookings.Commands.CreateBooking;
 
+/// <summary>
+/// Application use case that validates input and creates a booking aggregate.
+/// </summary>
 public sealed class CreateBookingUseCase : ICreateBookingUseCase
 {
     private readonly IRoomRepository _roomRepository;

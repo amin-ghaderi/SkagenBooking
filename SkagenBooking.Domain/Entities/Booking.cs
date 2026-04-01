@@ -6,39 +6,22 @@ using SkagenBooking.Core.Common;
 namespace SkagenBooking.Core.Entities;
 
 /// <summary>
-/// Represents a booking for a specific room within a given date range.
+/// Aggregate root representing a room booking for a property over a date range.
 /// </summary>
 public class Booking : AggregateRoot
 {
-    /// <summary>
-    /// Gets the unique identifier of the booking.
-    /// </summary>
     public int Id { get; private set; }
     public int PropertyId { get; private set; }
 
-    /// <summary>
-    /// Gets the identifier of the booked room.
-    /// </summary>
     public int RoomId { get; private set; }
 
-    /// <summary>
-    /// Gets the date range of the booking.
-    /// </summary>
     public DateRange DateRange { get; private set; }
     public int GuestCount { get; private set; }
     public bool NeedsParking { get; private set; }
     public TimeOnly? EstimatedArrivalTime { get; private set; }
 
-    /// <summary>
-    /// Gets the current status of the booking.
-    /// </summary>
     public BookingStatus Status { get; private set; }
 
-    /// <summary>
-    /// Initializes a new booking with a pending status.
-    /// </summary>
-    /// <param name="roomId">The room being booked.</param>
-    /// <param name="dateRange">The booking date range.</param>
     private Booking(int propertyId, int roomId, DateRange dateRange, int guestCount, bool needsParking, TimeOnly? estimatedArrivalTime)
     {
         PropertyId = propertyId;
@@ -50,6 +33,17 @@ public class Booking : AggregateRoot
         Status = BookingStatus.Pending;
     }
 
+    /// <summary>
+    /// Factory method that creates a new booking while enforcing domain invariants.
+    /// </summary>
+    /// <param name="propertyId">Identifier of the property that owns the room.</param>
+    /// <param name="roomId">Identifier of the booked room.</param>
+    /// <param name="dateRange">Date range of the stay (check-in/check-out).</param>
+    /// <param name="guestCount">Number of guests included in the booking.</param>
+    /// <param name="needsParking">Whether the booking should reserve parking capacity.</param>
+    /// <param name="isLateArrival">Whether the guest will arrive after the late-arrival threshold.</param>
+    /// <param name="estimatedArrivalTime">Estimated time of arrival when arriving late.</param>
+    /// <returns>The newly created booking aggregate.</returns>
     public static Booking Create(
         int propertyId,
         int roomId,
