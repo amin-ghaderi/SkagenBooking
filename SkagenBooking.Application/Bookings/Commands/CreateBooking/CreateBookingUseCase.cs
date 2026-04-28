@@ -26,6 +26,7 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
     private readonly IDomainEventDispatcher _domainEventDispatcher;
     private readonly IOutbox _outbox;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IClock _clock;
 
     public CreateBookingUseCase(
         IRoomRepository roomRepository,
@@ -38,7 +39,8 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
         IParkingAvailabilityService parkingAvailabilityService,
         IDomainEventDispatcher domainEventDispatcher,
         IOutbox outbox,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IClock clock)
     {
         _roomRepository = roomRepository;
         _bookingRepository = bookingRepository;
@@ -51,6 +53,7 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
         _domainEventDispatcher = domainEventDispatcher;
         _outbox = outbox;
         _unitOfWork = unitOfWork;
+        _clock = clock;
     }
 
     public async Task<CreateBookingResult> ExecuteAsync(CreateBookingCommand command, CancellationToken cancellationToken)
@@ -104,7 +107,7 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
             command.IsLateArrival,
             command.EstimatedArrivalTime,
             _bookingWindowPolicy,
-            DateTime.Today);
+            _clock.Today);
 
         if (!creationResult.IsSuccess)
         {

@@ -1,0 +1,6 @@
+@SkagenBooking.Api_HostAddress = http://localhost:5023
+
+GET {{SkagenBooking.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

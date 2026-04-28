@@ -5,6 +5,7 @@ using SkagenBooking.Core.Policies;
 using SkagenBooking.Core.Services;
 using SkagenBooking.Infrastructure.Persistence;
 using SkagenBooking.Infrastructure.Repositories;
+using SkagenBooking.Tests.Fakes;
 
 namespace SkagenBooking.Tests.Integration;
 
@@ -24,6 +25,7 @@ public class CreateBookingUseCaseIntegrationTests
         dispatcher.Register(new BookingCreatedDomainEventHandler());
         var outbox = new InMemoryOutbox();
         var uow = new InMemoryUnitOfWork();
+        var clock = new FakeClock(new DateTime(2026, 4, 1));
 
         return new CreateBookingUseCase(
             roomRepo,
@@ -36,7 +38,8 @@ public class CreateBookingUseCaseIntegrationTests
             parkingAvailabilityService,
             dispatcher,
             outbox,
-            uow);
+            uow,
+            clock);
     }
 
     [Fact]

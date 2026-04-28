@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="SkagenBooking.Application/SkagenBooking.Application.csproj" />
+  <Project Path="SkagenBooking.Api/SkagenBooking.Api.csproj" />
   <Project Path="SkagenBooking.Console/SkagenBooking.Console.csproj" />
   <Project Path="SkagenBooking.Domain/SkagenBooking.Domain.csproj" />
   <Project Path="SkagenBooking.Infrastructure/SkagenBooking.Infrastructure.csproj" />

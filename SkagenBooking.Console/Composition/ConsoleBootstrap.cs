@@ -6,6 +6,7 @@ using SkagenBooking.Application.Rooms.Queries.GetRooms;
 using SkagenBooking.Console.Application;
 using SkagenBooking.Core.Policies;
 using SkagenBooking.Core.Services;
+using SkagenBooking.Infrastructure.Time;
 using SkagenBooking.Infrastructure.Persistence;
 using SkagenBooking.Infrastructure.Repositories;
 
@@ -35,6 +36,7 @@ public static class ConsoleBootstrap
         domainEventDispatcher.Register(new BookingCreatedDomainEventHandler());
         var outbox = new InMemoryOutbox();
         var unitOfWork = new InMemoryUnitOfWork();
+        var clock = new SystemClock();
 
         // Application use cases
         var getRoomsUseCase = new GetRoomsUseCase(roomRepo);
@@ -50,7 +52,8 @@ public static class ConsoleBootstrap
             parkingAvailabilityService,
             domainEventDispatcher,
             outbox,
-            unitOfWork);
+            unitOfWork,
+            clock);
 
         var appService = new ConsoleAppService(getRoomsUseCase, createBookingUseCase, getBookingsUseCase, roomRepo, pricingService);
         return (appService, cancellationToken);
