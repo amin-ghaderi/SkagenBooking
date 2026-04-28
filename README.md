@@ -1,95 +1,85 @@
 # Skagen Booking System
 
-## 📌 Overview
+## Overview
 
-Skagen Booking is a small, production-style booking system for a bed & breakfast in Skagen.  
-It focuses on clean, maintainable design using Domain‑Driven Design (DDD) and Clean Architecture, with support for room reservations, availability checks, pricing, and parking allocation.
+SkagenBooking is a production-style booking system for a bed & breakfast in Skagen, built using Domain-Driven Design (DDD) and Clean Architecture.
 
-## 🧱 Architecture
+The system supports:
+- Room reservations
+- Availability validation (no overlaps)
+- Pricing calculation
+- Parking allocation with capacity constraints
+- Full CRUD operations via Web API
 
-The solution is organized into clear layers:
+The project is designed to be testable, maintainable, and easily extensible.
 
-- **Domain (`SkagenBooking.Domain`)**  
-  Contains the core domain model, value objects, domain services, policies, and repository interfaces. It has no dependencies on UI, database, or frameworks.
+---
 
-- **Application (`SkagenBooking.Application`)**  
-  Implements use cases (e.g. `CreateBookingUseCase`, `GetRoomsUseCase`, `GetBookingsUseCase`). It orchestrates flows between domain objects and handles cross‑cutting concerns like unit of work and outbox, but does not own business rules.
+## Architecture
 
-- **Infrastructure (`SkagenBooking.Infrastructure`)**  
-  Provides in‑memory implementations of domain/application interfaces (repositories, outbox, unit of work). This layer is where a real database (e.g. EF Core) can be plugged in later without changing domain or application code.
+The solution follows Clean Architecture:
 
-- **Console (`SkagenBooking.Console`)**  
-  A console UI used as a demo and testing adapter. It handles user interaction, delegates all business operations to the Application layer via `ConsoleAppService`, and wires dependencies in `ConsoleBootstrap`.
+- Domain (SkagenBooking.Domain)
+  Core business logic (entities, value objects, domain services)
 
-## 🧠 Domain Concepts
+- Application (SkagenBooking.Application)
+  Use cases (Create, Update, Cancel, Query bookings)
 
-- **Booking (aggregate root)**  
-  The main aggregate for reservations. It enforces core invariants such as guest count, date rules, late arrival requirements, and status transitions (pending, confirmed, cancelled).
+- Infrastructure (SkagenBooking.Infrastructure)
+  EF Core + SQLite, repositories, UnitOfWork, migrations
 
-- **ParkingAllocation (linked to Booking)**  
-  An aggregate representing a parking reservation derived from a `Booking`. It is created via a domain factory (`ParkingAllocation.CreateFromBooking`) so that no parking allocation can exist without an associated booking.
+- API (SkagenBooking.Api)
+  ASP.NET Core Web API (Controllers, DTOs, validation, Swagger)
 
-- **Property (with ParkingCapacity)**  
-  Represents a property (e.g. Pernille’s B&B) and holds configuration such as `ParkingCapacity`, which defines how many parking spots are available for that property.
+- Console (SkagenBooking.Console)
+  Demo adapter (legacy)
 
-- **Value Objects**  
-  - `DateRange` – encapsulates a start/end pair and provides overlap and night‑counting logic.  
-  - `Money` – represents monetary amounts with currency and supports safe operations like multiplication.
+- Tests (SkagenBooking.Tests)
+  Integration tests
 
-## ⚙️ Business Rules
+---
 
-- **No overlapping bookings**  
-  Room availability is enforced by `AvailabilityService`, which uses `DateRange` overlap logic and existing bookings for the room.
+## Features
 
-- **Check‑in/check‑out time rules**  
-  `BookingWindowPolicy` and `DateRange` ensure check‑in and check‑out times fall within allowed windows (e.g. check‑in after 14:00, check‑out before 12:00).
+- Create / Update / Cancel bookings
+- Prevent overlapping bookings
+- Parking capacity management
+- Validation (API + Domain)
+- Swagger UI
+- EF Core persistence
 
-- **Capacity validation**  
-  `Booking` validates that guest count is positive and does not exceed the room capacity.
+---
 
-- **Late arrival requires ETA**  
-  When a late arrival is indicated (after a defined threshold), an estimated time of arrival must be provided; otherwise the booking cannot be created.
+## Run
 
-- **Parking capacity per property**  
-  `ParkingAvailabilityService` checks parking allocations per property and date range against the `ParkingCapacity` defined on `Property`. Parking allocations are created only when there is remaining capacity.
+dotnet build  
+dotnet run --project SkagenBooking.Api  
 
-## ▶️ How to Run
+Swagger:
+http://localhost:5023/swagger
 
-From the repository root:
+---
 
-```bash
-dotnet build
-dotnet run --project SkagenBooking.Console
-```
+## Tests
 
-## 🧪 Tests
-
-Run the full test suite:
-
-```bash
 dotnet test
-```
 
-## 📄 Documentation
+---
 
-- `ARCHITECTURE_NOTES.md` – describes the overall architecture, layers, and responsibilities.  
-- `DDD_CONTEXT_MAP.md` – documents bounded contexts, aggregates, and how they interact.
+## Database
 
-## 🎯 Design Goals
+SQLite + EF Core
 
-- **Domain owns business logic** – entities, value objects, and domain services enforce all important rules.  
-- **Application orchestrates** – use cases coordinate domain operations and technical concerns without embedding rules.  
-- **Infrastructure is simple** – repositories and adapters are data‑only and easy to swap (e.g. in‑memory to EF Core).  
-- **Clean Architecture boundaries** – dependencies point inward toward the domain, keeping the core independent and testable.
+dotnet ef database update --project SkagenBooking.Infrastructure --startup-project SkagenBooking.Api
 
-## 🚀 Status
+Seed data runs automatically.
 
-- Booking system implemented with DDD‑style aggregates and value objects.  
-- Parking redesigned using `ParkingAllocation` and `ParkingAvailabilityService`.  
-- Console UI working for creating and listing bookings.  
-- All automated tests currently passing.
+---
 
-## 👨‍💻 Author
+## Status
 
-Amin Ghaderi
+Phase 1: API ✔  
+Phase 2: EF Core ✔  
+Phase 3: Update/Cancel ✔  
 
+System is fully functional end-to-end.
