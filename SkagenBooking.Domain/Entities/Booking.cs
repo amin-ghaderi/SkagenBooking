@@ -97,6 +97,46 @@ public class Booking : AggregateRoot
         }
     }
 
+    public BookingCreationResult UpdateDetails(
+        Room room,
+        DateRange dateRange,
+        int guestCount,
+        bool needsParking,
+        bool isLateArrival,
+        TimeOnly? estimatedArrivalTime,
+        BookingWindowPolicy policy,
+        DateTime currentDate)
+    {
+        if (Status == BookingStatus.Cancelled)
+        {
+            return BookingCreationResult.Failure("Cancelled bookings cannot be updated.");
+        }
+
+        if (guestCount <= 0)
+            return BookingCreationResult.Failure("Guest count must be greater than zero.");
+
+        if (guestCount > room.Capacity)
+            return BookingCreationResult.Failure("Guest count exceeds room capacity.");
+
+        if (dateRange.CheckIn.Date < currentDate.Date)
+            return BookingCreationResult.Failure("Check-in date cannot be in the past.");
+
+        if (!policy.IsValidCheckIn(TimeOnly.FromDateTime(dateRange.CheckIn)))
+            return BookingCreationResult.Failure("Check-in time must be between 14:00 and 22:30.");
+
+        if (!policy.IsValidCheckOut(TimeOnly.FromDateTime(dateRange.CheckOut)))
+            return BookingCreationResult.Failure("Check-out time must be no later than 12:00.");
+
+        if (isLateArrival && estimatedArrivalTime is null)
+            return BookingCreationResult.Failure("Estimated arrival time is required for arrivals after 20:00.");
+
+        DateRange = dateRange;
+        GuestCount = guestCount;
+        NeedsParking = needsParking;
+        EstimatedArrivalTime = estimatedArrivalTime;
+        return BookingCreationResult.Success(this);
+    }
+
     /// <summary>
     /// Confirms the booking.
     /// </summary>

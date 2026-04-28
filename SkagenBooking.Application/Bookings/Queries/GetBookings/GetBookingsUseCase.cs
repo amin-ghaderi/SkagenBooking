@@ -13,14 +13,10 @@ public sealed class GetBookingsUseCase : IGetBookingsUseCase
 
     public async Task<IReadOnlyList<BookingListItemDto>> ExecuteAsync(GetBookingsQuery query, CancellationToken cancellationToken)
     {
-        // In-memory repository does not filter by property, but DTO supports it for future DB.
-        var result = new List<BookingListItemDto>();
-
-        // naive in-memory listing: iterate over rooms 1-4 and collect bookings
-        for (var roomId = 1; roomId <= 4; roomId++)
-        {
-            var bookings = await _bookingRepository.GetByRoomAsync(roomId, cancellationToken);
-            result.AddRange(bookings.Select(b => new BookingListItemDto
+        var bookings = await _bookingRepository.GetAllAsync(cancellationToken);
+        return bookings
+            .Where(b => !query.PropertyId.HasValue || b.PropertyId == query.PropertyId.Value)
+            .Select(b => new BookingListItemDto
             {
                 Id = b.Id,
                 PropertyId = b.PropertyId,
@@ -29,10 +25,7 @@ public sealed class GetBookingsUseCase : IGetBookingsUseCase
                 CheckOut = b.DateRange.CheckOut,
                 GuestCount = b.GuestCount,
                 NeedsParking = b.NeedsParking
-            }));
-        }
-
-        return result
+            })
             .OrderBy(b => b.CheckIn)
             .ThenBy(b => b.RoomId)
             .ToList();

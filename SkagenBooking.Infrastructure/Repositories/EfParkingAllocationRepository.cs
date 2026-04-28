@@ -22,9 +22,20 @@ public sealed class EfParkingAllocationRepository : IParkingAllocationRepository
             .ToListAsync(cancellationToken);
     }
 
+    public Task<ParkingAllocation?> GetByBookingIdAsync(int bookingId, CancellationToken cancellationToken)
+    {
+        return _dbContext.ParkingAllocations.FirstOrDefaultAsync(x => x.BookingId == bookingId, cancellationToken);
+    }
+
     public async Task AddAsync(ParkingAllocation allocation, CancellationToken cancellationToken)
     {
         await _dbContext.ParkingAllocations.AddAsync(allocation, cancellationToken);
+    }
+
+    public Task RemoveAsync(ParkingAllocation allocation, CancellationToken cancellationToken)
+    {
+        _dbContext.ParkingAllocations.Remove(allocation);
+        return Task.CompletedTask;
     }
 }
 

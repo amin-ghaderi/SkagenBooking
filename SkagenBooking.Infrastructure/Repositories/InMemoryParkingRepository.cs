@@ -24,4 +24,15 @@ public class InMemoryParkingRepository : IParkingAllocationRepository
         _allocations.Add(allocation);
         return Task.CompletedTask;
     }
+
+    public Task<ParkingAllocation?> GetByBookingIdAsync(int bookingId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_allocations.FirstOrDefault(x => x.BookingId == bookingId));
+    }
+
+    public Task RemoveAsync(ParkingAllocation allocation, CancellationToken cancellationToken)
+    {
+        _allocations.Remove(allocation);
+        return Task.CompletedTask;
+    }
 }

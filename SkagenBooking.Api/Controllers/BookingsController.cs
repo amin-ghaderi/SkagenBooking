@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using SkagenBooking.Api.Contracts.Bookings;
+using SkagenBooking.Application.Bookings.Commands.CancelBooking;
 using SkagenBooking.Application.Bookings.Commands.CreateBooking;
+using SkagenBooking.Application.Bookings.Commands.UpdateBooking;
 using SkagenBooking.Application.Bookings.Queries.GetBookings;
 
 namespace SkagenBooking.Api.Controllers;
@@ -95,6 +97,58 @@ public sealed class BookingsController : ControllerBase
             GuestCount = booking.GuestCount,
             NeedsParking = booking.NeedsParking
         });
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult> Update(
+        [FromRoute] int id,
+        [FromBody] UpdateBookingRequest request,
+        [FromServices] IUpdateBookingUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateBookingCommand
+        {
+            BookingId = id,
+            CheckInDate = request.CheckInDate,
+            CheckOutDate = request.CheckOutDate,
+            GuestCount = request.GuestCount,
+            NeedsParking = request.NeedsParking,
+            IsLateArrival = request.IsLateArrival,
+            EstimatedArrivalTime = request.EstimatedArrivalTime
+        };
+
+        var result = await useCase.ExecuteAsync(command, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return Ok(new { message = "Booking updated." });
+        }
+
+        return result.Error switch
+        {
+            UpdateBookingError.NotFound => NotFound(new { message = result.Message }),
+            UpdateBookingError.Conflict => Conflict(new { message = result.Message }),
+            _ => BadRequest(new { message = result.Message })
+        };
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> Cancel(
+        [FromRoute] int id,
+        [FromServices] ICancelBookingUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.ExecuteAsync(new CancelBookingCommand { BookingId = id }, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return NoContent();
+        }
+
+        if (result.Error == CancelBookingError.NotFound)
+        {
+            return NotFound(new { message = result.Message });
+        }
+
+        return BadRequest(new { message = result.Message });
     }
 }
 
