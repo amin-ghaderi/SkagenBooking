@@ -25,6 +25,11 @@ public class ParkingAllocation : AggregateRoot
     /// </summary>
     public DateRange DateRange { get; private set; }
 
+    private ParkingAllocation()
+    {
+        DateRange = null!;
+    }
+
     private ParkingAllocation(int propertyId, int bookingId, DateRange dateRange)
     {
         PropertyId = propertyId;

@@ -1,5 +1,7 @@
 using SkagenBooking.Application;
 using SkagenBooking.Infrastructure.Composition;
+using SkagenBooking.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +17,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructureInMemory();
+builder.Services.AddInfrastructureSqlite(builder.Configuration);
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<SkagenBookingDbContext>();
+    dbContext.Database.Migrate();
+    await SqliteSeeder.SeedAsync(dbContext);
+}
 
 app.UseExceptionHandler(exceptionHandlerApp =>
 {

@@ -26,6 +26,11 @@ public class Booking : AggregateRoot
 
     public BookingStatus Status { get; private set; }
 
+    private Booking()
+    {
+        DateRange = null!;
+    }
+
     private Booking(int propertyId, int roomId, DateRange dateRange, int guestCount, bool needsParking, TimeOnly? estimatedArrivalTime)
     {
         Id = Interlocked.Increment(ref _nextId);
@@ -82,6 +87,14 @@ public class Booking : AggregateRoot
         var booking = new Booking(room.PropertyId, room.Id, dateRange, guestCount, needsParking, estimatedArrivalTime);
         booking.Raise(new BookingCreatedDomainEvent(room.PropertyId, room.Id));
         return BookingCreationResult.Success(booking);
+    }
+
+    public static void InitializeNextId(int currentMaxId)
+    {
+        if (currentMaxId > _nextId)
+        {
+            _nextId = currentMaxId;
+        }
     }
 
     /// <summary>

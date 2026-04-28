@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SkagenBooking.Application.Abstractions;
 using SkagenBooking.Application.Bookings.Events;
@@ -13,6 +15,39 @@ namespace SkagenBooking.Infrastructure.Composition;
 
 public static class InfrastructureRegistration
 {
+    public static IServiceCollection AddInfrastructureSqlite(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=skagenbooking.db";
+
+        services.AddDbContext<SkagenBookingDbContext>(options => options.UseSqlite(connectionString));
+        services.AddScoped<IClock, SystemClock>();
+
+        // Repositories (EF Core)
+        services.AddScoped<IRoomRepository, EfRoomRepository>();
+        services.AddScoped<IPropertyRepository, EfPropertyRepository>();
+        services.AddScoped<IBookingAggregateRepository, EfBookingRepository>();
+        services.AddScoped<IParkingAllocationRepository, EfParkingAllocationRepository>();
+
+        // Domain services / policies
+        services.AddScoped<IPricingService, BasicPricingService>();
+        services.AddScoped<BookingWindowPolicy>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IParkingAvailabilityService, ParkingAvailabilityService>();
+
+        // Cross-cutting
+        services.AddScoped<IDomainEventDispatcher>(_ =>
+        {
+            var dispatcher = new InMemoryDomainEventDispatcher();
+            dispatcher.Register(new BookingCreatedDomainEventHandler());
+            return dispatcher;
+        });
+        services.AddScoped<IOutbox, InMemoryOutbox>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+        return services;
+    }
+
     public static IServiceCollection AddInfrastructureInMemory(this IServiceCollection services)
     {
         services.AddSingleton<IClock, SystemClock>();

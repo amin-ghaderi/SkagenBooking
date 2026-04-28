@@ -25,6 +25,11 @@ public class Room
     public int Capacity { get; private set; }
     public Money NightlyRate { get; private set; }
 
+    private Room()
+    {
+        NightlyRate = default;
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Room"/> class.
     /// </summary>
