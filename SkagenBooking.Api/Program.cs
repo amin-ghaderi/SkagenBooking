@@ -10,8 +10,25 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.SetIsOriginAllowed(origin =>
+            {
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                {
+                    return false;
+                }
+
+                return uri.Host is "localhost" or "127.0.0.1"
+                    && uri.Port is >= 5173 and <= 5180;
+            });
+        }
+        else
+        {
+            policy.WithOrigins("http://localhost:5173");
+        }
+
+        policy.AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
@@ -69,9 +86,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors();
+
+app.UseHttpsRedirection();
 
 app.MapControllers();
 

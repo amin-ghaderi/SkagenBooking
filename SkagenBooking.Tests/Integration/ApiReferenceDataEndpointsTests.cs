@@ -40,16 +40,18 @@ public class ApiReferenceDataEndpointsTests : IClassFixture<SkagenBookingApiFact
         Assert.Contains(rooms, r => r.Id == 1 && r.NightlyRate == 550m && r.Currency == "DKK");
     }
 
-    [Fact]
-    public async Task Options_Preflight_From_Vite_Origin_Should_Include_Cors_Headers()
+    [Theory]
+    [InlineData("http://localhost:5173")]
+    [InlineData("http://localhost:5174")]
+    public async Task Options_Preflight_From_Vite_Origin_Should_Include_Cors_Headers(string origin)
     {
         var request = new HttpRequestMessage(HttpMethod.Options, "/api/bookings");
-        request.Headers.Add("Origin", "http://localhost:5173");
+        request.Headers.Add("Origin", origin);
         request.Headers.Add("Access-Control-Request-Method", "GET");
 
         var response = await _client.SendAsync(request);
 
         Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"));
-        Assert.Equal("http://localhost:5173", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        Assert.Equal(origin, response.Headers.GetValues("Access-Control-Allow-Origin").Single());
     }
 }
