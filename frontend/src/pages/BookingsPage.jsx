@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import BookingTable from '../components/BookingTable'
 import EmptyState from '../components/EmptyState'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { deleteBooking, getBookings } from '../services/bookingsApi'
 
 export default function BookingsPage() {
+  const location = useLocation()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [successMessage, setSuccessMessage] = useState(location.state?.message ?? '')
 
   const loadBookings = useCallback(async () => {
     setLoading(true)
@@ -77,6 +79,24 @@ export default function BookingsPage() {
           New Booking
         </Link>
       </div>
+
+      {successMessage && (
+        <div
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm"
+          role="status"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <p>{successMessage}</p>
+            <button
+              type="button"
+              onClick={() => setSuccessMessage('')}
+              className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading && <LoadingSpinner />}
 

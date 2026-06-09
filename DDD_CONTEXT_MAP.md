@@ -1,81 +1,32 @@
-# DDD Context Map – SkagenBooking
+# DDD Context Map
 
-## Overview
+## Core Domain
 
-The system is modeled using bounded contexts coordinated via the Application layer.
+The core domain is booking management for a Bed & Breakfast.
 
----
+## Main Concepts
 
-## Contexts
+### Booking
+Represents a reservation made by a guest.
 
-### BookingContext
-Aggregate: Booking
+### Room
+Represents an available room with capacity and pricing.
 
-Handles:
-- Create / Update / Cancel
-- Date rules
-- Guest count
-- Status transitions
-- Late arrival rules
+### Property
+Represents the Bed & Breakfast location.
 
----
+### Parking Allocation
+Tracks parking usage during booking periods.
 
-### InventoryContext
-Entities:
-- Property
-- Room
+## Key Rules
 
-Provides:
-- Capacity
-- Pricing data
+- A room cannot be double-booked.
+- Guest count cannot exceed room capacity.
+- Parking capacity must not be exceeded.
+- Cancelled bookings release parking allocations.
 
----
+## Booking Lifecycle
 
-### ParkingContext
-Aggregate: ParkingAllocation
-
-Handles:
-- Parking capacity per property
-- Linked to Booking
-
-Rule:
-No ParkingAllocation without Booking
-
----
-
-### PricingContext
-Handles:
-- Price calculation
-
-Formula:
-NightlyRate × Nights
-
----
-
-## Coordination
-
-Handled by Application layer
-
-Example:
-CreateBookingUseCase uses:
-- Room (Inventory)
-- Booking (Domain)
-- Parking (Capacity)
-- Pricing
-
----
-
-## Principles
-
-- Booking is main aggregate
-- Parking is derived
-- Domain owns rules
-- Application orchestrates
-
----
-
-## Status
-
-- Create / Update / Cancel implemented
-- EF Core integrated
-- API complete
+Pending
+→ Updated
+→ Cancelled

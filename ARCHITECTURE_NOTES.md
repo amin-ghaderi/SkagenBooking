@@ -1,83 +1,31 @@
-# SkagenBooking – Architecture Notes
+# Architecture Notes
 
-## Goal
-
-Clean, production-ready architecture where:
-- Domain owns business rules
-- Application orchestrates workflows
-- Infrastructure handles persistence
-- API exposes functionality
-
----
+The project follows a simplified Clean Architecture approach.
 
 ## Layers
 
 ### Domain
-- Booking (aggregate)
+Contains business rules and core entities:
+- Booking
+- Room
+- Property
 - ParkingAllocation
-- Value Objects: DateRange, Money
-- Services: Availability, Parking, Pricing
-
-No external dependencies.
-
----
 
 ### Application
-Use cases:
-- CreateBooking
-- UpdateBooking
-- CancelBooking
-- GetBookings
-
-Handles orchestration and transactions.
-
----
+Contains use cases and application workflows.
 
 ### Infrastructure
-- EF Core + SQLite
-- DbContext
-- Repositories
-- UnitOfWork
-- Migrations + Seed
-
----
+Provides database access, repository implementations, and EF Core configuration.
 
 ### API
-- Controllers
-- DTOs
-- Validation
-- ProblemDetails
-- Swagger
+Exposes HTTP endpoints and handles request/response mapping.
 
-Thin layer over Application.
+### Frontend
+React application consuming the API.
 
----
+## Design Goals
 
-## Flow
-
-API → Application → Domain → Infrastructure → DB
-
----
-
-## Key Decisions
-
-- IClock for testable time
-- 409 Conflict for overlaps
-- EF mapping for value objects
-
----
-
-## Current State
-
-- Full booking lifecycle implemented
-- Database persistence enabled
-- API ready
-
----
-
-## Next Steps
-
-- API integration tests
-- Outbox persistence
-- Concurrency handling
-- Pagination
+- Clear separation of concerns
+- Testable business logic
+- Simple persistence layer
+- Easy extension for future features

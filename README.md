@@ -1,85 +1,94 @@
-# Skagen Booking System
+# SkagenBooking
 
-## Overview
-
-SkagenBooking is a production-style booking system for a bed & breakfast in Skagen, built using Domain-Driven Design (DDD) and Clean Architecture.
-
-The system supports:
-- Room reservations
-- Availability validation (no overlaps)
-- Pricing calculation
-- Parking allocation with capacity constraints
-- Full CRUD operations via Web API
-
-The project is designed to be testable, maintainable, and easily extensible.
-
----
-
-## Architecture
-
-The solution follows Clean Architecture:
-
-- Domain (SkagenBooking.Domain)
-  Core business logic (entities, value objects, domain services)
-
-- Application (SkagenBooking.Application)
-  Use cases (Create, Update, Cancel, Query bookings)
-
-- Infrastructure (SkagenBooking.Infrastructure)
-  EF Core + SQLite, repositories, UnitOfWork, migrations
-
-- API (SkagenBooking.Api)
-  ASP.NET Core Web API (Controllers, DTOs, validation, Swagger)
-
-- Console (SkagenBooking.Console)
-  Demo adapter (legacy)
-
-- Tests (SkagenBooking.Tests)
-  Integration tests
-
----
+A simple booking management system for a Bed & Breakfast in Skagen.
 
 ## Features
 
-- Create / Update / Cancel bookings
-- Prevent overlapping bookings
+- Create bookings
+- View bookings
+- Update bookings
+- Cancel bookings
 - Parking capacity management
-- Validation (API + Domain)
-- Swagger UI
-- EF Core persistence
+- Booking conflict validation
 
----
+## Technology Stack
 
-## Run
+### Backend
+- ASP.NET Core Web API
+- Clean Architecture
+- Entity Framework Core
+- SQLite
+- Swagger
 
-dotnet build  
-dotnet run --project SkagenBooking.Api  
+### Frontend
+- React
+- Vite
+- Tailwind CSS
+- Axios
 
-Swagger:
-http://localhost:5023/swagger
+## Solution Structure
 
----
+- SkagenBooking.Api
+- SkagenBooking.Application
+- SkagenBooking.Domain
+- SkagenBooking.Infrastructure
+- SkagenBooking.Tests
+- frontend
+
+## Run Backend
+
+```bash
+dotnet run --project SkagenBooking.Api
+```
+
+API: `http://localhost:5023`  
+Swagger: `http://localhost:5023/swagger`
+
+The database is created and seeded automatically on startup.
+
+## Run Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+App: `http://localhost:5173`
+
+In development, Vite proxies `/api` requests to the backend. Ensure the API is running before using the frontend.
 
 ## Tests
 
+```bash
 dotnet test
+```
 
----
+Frontend:
 
-## Database
+```bash
+cd frontend
+npm run lint
+npm run build
+```
 
-SQLite + EF Core
+## API Endpoints
 
-dotnet ef database update --project SkagenBooking.Infrastructure --startup-project SkagenBooking.Api
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/properties` | List properties |
+| GET | `/api/rooms?propertyId={id}` | List rooms |
+| GET | `/api/bookings` | List bookings |
+| GET | `/api/bookings/{id}` | Get booking |
+| POST | `/api/bookings` | Create booking |
+| PUT | `/api/bookings/{id}` | Update booking |
+| DELETE | `/api/bookings/{id}` | Cancel booking |
 
-Seed data runs automatically.
+## Frontend Routes
 
----
-
-## Status
-
-Phase 1: API ✔  
-Phase 2: EF Core ✔  
-Phase 3: Update/Cancel ✔  
-
-System is fully functional end-to-end.
+| Route | Page |
+|-------|------|
+| `/` | Home |
+| `/bookings` | Booking list |
+| `/bookings/new` | Create booking |
+| `/bookings/:id/edit` | Edit booking |
