@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SkagenBooking.Api.Contracts.Bookings;
+using SkagenBooking.Api.Mapping;
 using SkagenBooking.Application.Bookings.Commands.CancelBooking;
 using SkagenBooking.Application.Bookings.Commands.CreateBooking;
 using SkagenBooking.Application.Bookings.Commands.UpdateBooking;
@@ -7,11 +8,21 @@ using SkagenBooking.Application.Bookings.Queries.GetBookings;
 
 namespace SkagenBooking.Api.Controllers;
 
+/// <summary>
+/// Manages booking lifecycle: create, list, update, and cancel.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public sealed class BookingsController : ControllerBase
 {
+    /// <summary>
+    /// Creates a new booking.
+    /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(CreateBookingResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateBookingResponse>> Create(
         [FromBody] CreateBookingRequest request,
         [FromServices] ICreateBookingUseCase useCase,
@@ -42,39 +53,35 @@ public sealed class BookingsController : ControllerBase
 
         var response = new CreateBookingResponse
         {
-            BookingId = result.BookingId.Value,
+            Id = result.BookingId.Value,
             TotalAmount = result.TotalAmount.Value,
             Currency = result.Currency,
             Message = result.Message
         };
 
-        return CreatedAtAction(nameof(GetById), new { id = response.BookingId }, response);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
+    /// <summary>
+    /// Lists all bookings.
+    /// </summary>
     [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<BookingResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<BookingResponse>>> GetAll(
         [FromServices] IGetBookingsUseCase useCase,
         CancellationToken cancellationToken)
     {
         var bookings = await useCase.ExecuteAsync(new GetBookingsQuery { PropertyId = null }, cancellationToken);
-
-        var response = bookings
-            .Select(b => new BookingResponse
-            {
-                Id = b.Id,
-                PropertyId = b.PropertyId,
-                RoomId = b.RoomId,
-                CheckIn = b.CheckIn,
-                CheckOut = b.CheckOut,
-                GuestCount = b.GuestCount,
-                NeedsParking = b.NeedsParking
-            })
-            .ToList();
-
+        var response = bookings.Select(BookingResponseMapper.From).ToList();
         return Ok(response);
     }
 
+    /// <summary>
+    /// Gets a single booking by id.
+    /// </summary>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BookingResponse>> GetById(
         [FromRoute] int id,
         [FromServices] IGetBookingsUseCase useCase,
@@ -87,19 +94,17 @@ public sealed class BookingsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new BookingResponse
-        {
-            Id = booking.Id,
-            PropertyId = booking.PropertyId,
-            RoomId = booking.RoomId,
-            CheckIn = booking.CheckIn,
-            CheckOut = booking.CheckOut,
-            GuestCount = booking.GuestCount,
-            NeedsParking = booking.NeedsParking
-        });
+        return Ok(BookingResponseMapper.From(booking));
     }
 
+    /// <summary>
+    /// Updates an existing booking.
+    /// </summary>
     [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Update(
         [FromRoute] int id,
         [FromBody] UpdateBookingRequest request,
@@ -131,7 +136,13 @@ public sealed class BookingsController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Cancels a booking.
+    /// </summary>
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Cancel(
         [FromRoute] int id,
         [FromServices] ICancelBookingUseCase useCase,
@@ -151,4 +162,3 @@ public sealed class BookingsController : ControllerBase
         return BadRequest(new { message = result.Message });
     }
 }
-

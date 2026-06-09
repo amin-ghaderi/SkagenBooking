@@ -24,7 +24,10 @@ public sealed class GetBookingsUseCase : IGetBookingsUseCase
                 CheckIn = b.DateRange.CheckIn,
                 CheckOut = b.DateRange.CheckOut,
                 GuestCount = b.GuestCount,
-                NeedsParking = b.NeedsParking
+                NeedsParking = b.NeedsParking,
+                Status = b.Status.ToString(),
+                IsLateArrival = b.EstimatedArrivalTime.HasValue,
+                EstimatedArrivalTime = b.EstimatedArrivalTime
             })
             .OrderBy(b => b.CheckIn)
             .ThenBy(b => b.RoomId)

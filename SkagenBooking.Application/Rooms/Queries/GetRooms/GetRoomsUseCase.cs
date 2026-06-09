@@ -19,8 +19,11 @@ public sealed class GetRoomsUseCase : IGetRoomsUseCase
             {
                 Id = r.Id,
                 PropertyId = r.PropertyId,
+                Name = r.Type.ToString(),
                 Type = r.Type.ToString(),
-                Capacity = r.Capacity
+                Capacity = r.Capacity,
+                NightlyRate = r.NightlyRate.Amount,
+                Currency = r.NightlyRate.Currency
             })
             .ToList();
     }

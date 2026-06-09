@@ -9,4 +9,7 @@ public sealed class BookingListItemDto
     public DateTime CheckOut { get; init; }
     public int GuestCount { get; init; }
     public bool NeedsParking { get; init; }
+    public string Status { get; init; } = string.Empty;
+    public bool IsLateArrival { get; init; }
+    public TimeOnly? EstimatedArrivalTime { get; init; }
 }
