@@ -4,6 +4,7 @@ namespace SkagenBooking.Application.Bookings.Commands.UpdateBooking;
 
 public sealed class UpdateBookingCommand : ICommand<UpdateBookingResult>
 {
+    public required string UserId { get; init; }
     public int BookingId { get; init; }
     public DateTime CheckInDate { get; init; }
     public DateTime CheckOutDate { get; init; }

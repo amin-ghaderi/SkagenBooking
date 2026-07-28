@@ -22,7 +22,7 @@ public sealed class CancelBookingUseCase : ICancelBookingUseCase
     public async Task<CancelBookingResult> ExecuteAsync(CancelBookingCommand command, CancellationToken cancellationToken)
     {
         var booking = await _bookingRepository.GetByIdAsync(command.BookingId, cancellationToken);
-        if (booking is null)
+        if (booking is null || booking.UserId != command.UserId)
         {
             return new CancelBookingResult { IsSuccess = false, Error = CancelBookingError.NotFound, Message = "Booking not found." };
         }

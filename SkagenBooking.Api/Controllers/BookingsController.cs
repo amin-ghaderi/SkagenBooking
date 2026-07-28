@@ -141,8 +141,15 @@ public sealed class BookingsController : ControllerBase
         [FromServices] IUpdateBookingUseCase useCase,
         CancellationToken cancellationToken)
     {
+        var userId = GetRequiredUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
         var command = new UpdateBookingCommand
         {
+            UserId = userId,
             BookingId = id,
             CheckInDate = request.CheckInDate,
             CheckOutDate = request.CheckOutDate,
@@ -179,7 +186,15 @@ public sealed class BookingsController : ControllerBase
         [FromServices] ICancelBookingUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.ExecuteAsync(new CancelBookingCommand { BookingId = id }, cancellationToken);
+        var userId = GetRequiredUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await useCase.ExecuteAsync(
+            new CancelBookingCommand { UserId = userId, BookingId = id },
+            cancellationToken);
         if (result.IsSuccess)
         {
             return NoContent();

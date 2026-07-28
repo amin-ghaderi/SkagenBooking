@@ -44,7 +44,7 @@ public sealed class UpdateBookingUseCase : IUpdateBookingUseCase
     public async Task<UpdateBookingResult> ExecuteAsync(UpdateBookingCommand command, CancellationToken cancellationToken)
     {
         var booking = await _bookingRepository.GetByIdAsync(command.BookingId, cancellationToken);
-        if (booking is null)
+        if (booking is null || booking.UserId != command.UserId)
         {
             return new UpdateBookingResult { IsSuccess = false, Error = UpdateBookingError.NotFound, Message = "Booking not found." };
         }

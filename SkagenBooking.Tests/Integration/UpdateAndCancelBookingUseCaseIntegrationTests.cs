@@ -70,9 +70,11 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
     public async Task UpdateBooking_Should_Fail_With_Conflict_On_Overlap()
     {
         var (createUseCase, updateUseCase, _) = BuildUseCases();
+        const string userId = "owner-1";
 
         var first = await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = 1,
             RoomId = 2,
             CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
@@ -84,6 +86,7 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
 
         var second = await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = 1,
             RoomId = 2,
             CheckInDate = new DateTime(2026, 4, 24, 14, 0, 0),
@@ -95,6 +98,7 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
 
         var update = await updateUseCase.ExecuteAsync(new UpdateBookingCommand
         {
+            UserId = userId,
             BookingId = second.BookingId!.Value,
             CheckInDate = new DateTime(2026, 4, 21, 14, 0, 0),
             CheckOutDate = new DateTime(2026, 4, 23, 11, 0, 0),
@@ -113,9 +117,11 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
     public async Task CancelBooking_Should_Free_Parking_Slot()
     {
         var (createUseCase, _, cancelUseCase) = BuildUseCases();
+        const string userId = "owner-1";
 
         var first = await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = 1,
             RoomId = 1,
             CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
@@ -127,6 +133,7 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
 
         var second = await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = 1,
             RoomId = 2,
             CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
@@ -138,6 +145,7 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
 
         var thirdBeforeCancel = await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = 1,
             RoomId = 3,
             CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
@@ -147,10 +155,13 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
             IsLateArrival = false
         }, CancellationToken.None);
 
-        var cancel = await cancelUseCase.ExecuteAsync(new CancelBookingCommand { BookingId = first.BookingId!.Value }, CancellationToken.None);
+        var cancel = await cancelUseCase.ExecuteAsync(
+            new CancelBookingCommand { UserId = userId, BookingId = first.BookingId!.Value },
+            CancellationToken.None);
 
         var thirdAfterCancel = await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = 1,
             RoomId = 3,
             CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
@@ -166,5 +177,63 @@ public class UpdateAndCancelBookingUseCaseIntegrationTests
         Assert.True(cancel.IsSuccess);
         Assert.True(thirdAfterCancel.IsCreated);
     }
-}
 
+    [Fact]
+    public async Task UpdateBooking_Should_Return_NotFound_For_Non_Owner()
+    {
+        var (createUseCase, updateUseCase, _) = BuildUseCases();
+
+        var created = await createUseCase.ExecuteAsync(new CreateBookingCommand
+        {
+            UserId = "owner-a",
+            PropertyId = 1,
+            RoomId = 2,
+            CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
+            CheckOutDate = new DateTime(2026, 4, 22, 11, 0, 0),
+            GuestCount = 2,
+            NeedsParking = false,
+            IsLateArrival = false
+        }, CancellationToken.None);
+
+        var update = await updateUseCase.ExecuteAsync(new UpdateBookingCommand
+        {
+            UserId = "owner-b",
+            BookingId = created.BookingId!.Value,
+            CheckInDate = new DateTime(2026, 4, 21, 14, 0, 0),
+            CheckOutDate = new DateTime(2026, 4, 23, 11, 0, 0),
+            GuestCount = 2,
+            NeedsParking = false,
+            IsLateArrival = false
+        }, CancellationToken.None);
+
+        Assert.True(created.IsCreated);
+        Assert.False(update.IsSuccess);
+        Assert.Equal(UpdateBookingError.NotFound, update.Error);
+    }
+
+    [Fact]
+    public async Task CancelBooking_Should_Return_NotFound_For_Non_Owner()
+    {
+        var (createUseCase, _, cancelUseCase) = BuildUseCases();
+
+        var created = await createUseCase.ExecuteAsync(new CreateBookingCommand
+        {
+            UserId = "owner-a",
+            PropertyId = 1,
+            RoomId = 2,
+            CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
+            CheckOutDate = new DateTime(2026, 4, 22, 11, 0, 0),
+            GuestCount = 2,
+            NeedsParking = false,
+            IsLateArrival = false
+        }, CancellationToken.None);
+
+        var cancel = await cancelUseCase.ExecuteAsync(
+            new CancelBookingCommand { UserId = "owner-b", BookingId = created.BookingId!.Value },
+            CancellationToken.None);
+
+        Assert.True(created.IsCreated);
+        Assert.False(cancel.IsSuccess);
+        Assert.Equal(CancelBookingError.NotFound, cancel.Error);
+    }
+}
