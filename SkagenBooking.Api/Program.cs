@@ -32,7 +32,8 @@ builder.Services.AddCors(options =>
         }
 
         policy.AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 builder.Services.AddProblemDetails(options =>

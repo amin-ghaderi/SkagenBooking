@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import BookingTable from '../components/BookingTable'
 import EmptyState from '../components/EmptyState'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -7,6 +8,8 @@ import { deleteBooking, getBookings } from '../services/bookingsApi'
 
 export default function BookingsPage() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -55,6 +58,11 @@ export default function BookingsPage() {
   }, [])
 
   const handleCancel = async (id) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
+
     const confirmed = window.confirm(`Cancel booking #${id}?`)
     if (!confirmed) {
       return
@@ -72,12 +80,21 @@ export default function BookingsPage() {
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">Bookings</h1>
-        <Link
-          to="/bookings/new"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
-        >
-          New Booking
-        </Link>
+        {isAuthenticated ? (
+          <Link
+            to="/bookings/new"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+          >
+            New Booking
+          </Link>
+        ) : (
+          <Link
+            to="/login"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+          >
+            Login to book
+          </Link>
+        )}
       </div>
 
       {successMessage && (
