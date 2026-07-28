@@ -31,6 +31,19 @@ public sealed class SkagenBookingDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.EstimatedArrivalTime);
             entity.Property(x => x.Status).IsRequired();
 
+            // Optional owner link for Phase 1: null UserId = unowned / legacy booking.
+            entity.Property(x => x.UserId)
+                .HasMaxLength(450)
+                .IsRequired(false);
+
+            entity.HasIndex(x => x.UserId);
+
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.OwnsOne(x => x.DateRange, dateRange =>
             {
                 dateRange.Property(x => x.CheckIn).HasColumnName("CheckIn").IsRequired();

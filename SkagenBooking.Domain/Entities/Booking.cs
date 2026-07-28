@@ -19,6 +19,13 @@ public class Booking : AggregateRoot
 
     public int RoomId { get; private set; }
 
+    /// <summary>
+    /// Identity user id that owns this booking.
+    /// Null means the booking is not yet associated with a user (legacy / pre-ownership).
+    /// Domain stores a plain string so it stays independent of ASP.NET Identity types.
+    /// </summary>
+    public string? UserId { get; private set; }
+
     public DateRange DateRange { get; private set; }
     public int GuestCount { get; private set; }
     public bool NeedsParking { get; private set; }
@@ -36,6 +43,7 @@ public class Booking : AggregateRoot
         Id = Interlocked.Increment(ref _nextId);
         PropertyId = propertyId;
         RoomId = roomId;
+        UserId = null;
         DateRange = dateRange;
         GuestCount = guestCount;
         NeedsParking = needsParking;
