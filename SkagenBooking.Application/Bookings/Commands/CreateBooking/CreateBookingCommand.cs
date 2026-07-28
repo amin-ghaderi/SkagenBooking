@@ -4,6 +4,7 @@ namespace SkagenBooking.Application.Bookings.Commands.CreateBooking;
 
 public sealed class CreateBookingCommand : ICommand<CreateBookingResult>
 {
+    public string? UserId { get; init; }
     public int PropertyId { get; init; }
     public int RoomId { get; init; }
     public DateTime CheckInDate { get; init; }

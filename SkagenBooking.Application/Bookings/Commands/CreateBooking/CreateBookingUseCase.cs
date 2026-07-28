@@ -120,6 +120,11 @@ public sealed class CreateBookingUseCase : ICreateBookingUseCase
 
         var booking = creationResult.Booking!;
 
+        if (!string.IsNullOrWhiteSpace(command.UserId))
+        {
+            booking.AssignOwner(command.UserId);
+        }
+
         await _bookingRepository.AddAsync(booking, cancellationToken);
 
         if (command.NeedsParking)

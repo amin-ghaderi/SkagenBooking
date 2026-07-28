@@ -52,6 +52,15 @@ public class Booking : AggregateRoot
     }
 
     /// <summary>
+    /// Associates this booking with an authenticated Identity user id.
+    /// </summary>
+    public void AssignOwner(string userId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        UserId = userId;
+    }
+
+    /// <summary>
     /// Attempts to create a booking aggregate while enforcing domain invariants and policies.
     /// </summary>
     /// <param name="room">Room the guest wants to book.</param>

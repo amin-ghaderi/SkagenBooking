@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkagenBooking.Api.Contracts.Bookings;
@@ -31,8 +32,15 @@ public sealed class BookingsController : ControllerBase
         [FromServices] ICreateBookingUseCase useCase,
         CancellationToken cancellationToken)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
         var command = new CreateBookingCommand
         {
+            UserId = userId,
             PropertyId = request.PropertyId,
             RoomId = request.RoomId,
             CheckInDate = request.CheckInDate,
