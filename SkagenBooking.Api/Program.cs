@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SkagenBooking.Application;
 using SkagenBooking.Infrastructure.Composition;
+using SkagenBooking.Infrastructure.Identity;
 using SkagenBooking.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,14 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructureSqlite(builder.Configuration);
+
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.Password.RequiredLength = 8;
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<SkagenBookingDbContext>();
 
 var app = builder.Build();
 

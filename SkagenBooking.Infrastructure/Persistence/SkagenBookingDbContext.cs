@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SkagenBooking.Core.Entities;
-using SkagenBooking.Core.ValueObjects;
+using SkagenBooking.Infrastructure.Identity;
 
 namespace SkagenBooking.Infrastructure.Persistence;
 
-public sealed class SkagenBookingDbContext : DbContext
+public sealed class SkagenBookingDbContext : IdentityDbContext<ApplicationUser>
 {
     public SkagenBookingDbContext(DbContextOptions<SkagenBookingDbContext> options)
         : base(options)
@@ -18,6 +19,8 @@ public sealed class SkagenBookingDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Booking>(entity =>
         {
             entity.HasKey(x => x.Id);

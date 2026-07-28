@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SkagenBooking.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using SkagenBooking.Infrastructure.Persistence;
 namespace SkagenBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(SkagenBookingDbContext))]
-    partial class SkagenBookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728101500_AddIdentityTables")]
+    partial class AddIdentityTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.7");
