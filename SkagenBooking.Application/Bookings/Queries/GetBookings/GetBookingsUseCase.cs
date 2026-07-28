@@ -13,7 +13,7 @@ public sealed class GetBookingsUseCase : IGetBookingsUseCase
 
     public async Task<IReadOnlyList<BookingListItemDto>> ExecuteAsync(GetBookingsQuery query, CancellationToken cancellationToken)
     {
-        var bookings = await _bookingRepository.GetAllAsync(cancellationToken);
+        var bookings = await _bookingRepository.GetByUserIdAsync(query.UserId, cancellationToken);
         return bookings
             .Where(b => !query.PropertyId.HasValue || b.PropertyId == query.PropertyId.Value)
             .Select(b => new BookingListItemDto

@@ -5,6 +5,7 @@ using SkagenBooking.Console.Composition;
 using SkagenBooking.Core.ValueObjects;
 
 var (appService, cancellationToken) = ConsoleBootstrap.Build();
+const string consoleUserId = "console-user";
 
 while (true)
 {
@@ -26,7 +27,7 @@ while (true)
         Console.Clear();
         Console.WriteLine("Current bookings");
         Console.WriteLine("----------------");
-        var bookings = await appService.GetBookingsAsync(propertyId: null, cancellationToken);
+        var bookings = await appService.GetBookingsAsync(consoleUserId, propertyId: null, cancellationToken);
         if (!bookings.Any())
         {
             Console.WriteLine("No bookings yet.");
@@ -242,6 +243,7 @@ while (true)
 
     var result = await appService.CreateBookingAsync(new CreateBookingCommand
     {
+        UserId = consoleUserId,
         PropertyId = propertyId,
         RoomId = roomId,
         CheckInDate = start,

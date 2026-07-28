@@ -44,9 +44,11 @@ public sealed class ConsoleAppService
         return _createBookingUseCase.ExecuteAsync(command, cancellationToken);
     }
 
-    public Task<IReadOnlyList<BookingListItemDto>> GetBookingsAsync(int? propertyId, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<BookingListItemDto>> GetBookingsAsync(string userId, int? propertyId, CancellationToken cancellationToken)
     {
-        return _getBookingsUseCase.ExecuteAsync(new GetBookingsQuery { PropertyId = propertyId }, cancellationToken);
+        return _getBookingsUseCase.ExecuteAsync(
+            new GetBookingsQuery { UserId = userId, PropertyId = propertyId },
+            cancellationToken);
     }
 
     public async Task<Money?> GetEstimatedPriceAsync(int roomId, DateTime checkIn, DateTime checkOut, CancellationToken cancellationToken)

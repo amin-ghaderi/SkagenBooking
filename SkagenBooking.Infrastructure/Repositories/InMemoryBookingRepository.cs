@@ -30,6 +30,16 @@ public class InMemoryBookingRepository : IBookingAggregateRepository
         return Task.FromResult(bookings);
     }
 
+    public Task<IReadOnlyList<Booking>> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<Booking> bookings = _bookings
+            .Where(b => b.UserId == userId)
+            .OrderBy(x => x.DateRange.CheckIn)
+            .ThenBy(x => x.RoomId)
+            .ToList();
+        return Task.FromResult(bookings);
+    }
+
     public Task<IReadOnlyList<Booking>> GetByRoomAsync(int roomId, CancellationToken cancellationToken)
     {
         IReadOnlyList<Booking> bookings = _bookings

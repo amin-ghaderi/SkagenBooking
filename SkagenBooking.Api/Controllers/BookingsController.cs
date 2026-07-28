@@ -32,8 +32,8 @@ public sealed class BookingsController : ControllerBase
         [FromServices] ICreateBookingUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
+        var userId = GetRequiredUserId();
+        if (userId is null)
         {
             return Unauthorized();
         }
@@ -74,33 +74,49 @@ public sealed class BookingsController : ControllerBase
     }
 
     /// <summary>
-    /// Lists all bookings.
+    /// Lists bookings owned by the authenticated user.
     /// </summary>
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<BookingResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyList<BookingResponse>>> GetAll(
         [FromServices] IGetBookingsUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var bookings = await useCase.ExecuteAsync(new GetBookingsQuery { PropertyId = null }, cancellationToken);
+        var userId = GetRequiredUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var bookings = await useCase.ExecuteAsync(
+            new GetBookingsQuery { UserId = userId, PropertyId = null },
+            cancellationToken);
         var response = bookings.Select(BookingResponseMapper.From).ToList();
         return Ok(response);
     }
 
     /// <summary>
-    /// Gets a single booking by id.
+    /// Gets a single booking by id when owned by the authenticated user.
     /// </summary>
-    [AllowAnonymous]
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BookingResponse>> GetById(
         [FromRoute] int id,
         [FromServices] IGetBookingsUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var bookings = await useCase.ExecuteAsync(new GetBookingsQuery { PropertyId = null }, cancellationToken);
+        var userId = GetRequiredUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var bookings = await useCase.ExecuteAsync(
+            new GetBookingsQuery { UserId = userId, PropertyId = null },
+            cancellationToken);
         var booking = bookings.FirstOrDefault(b => b.Id == id);
         if (booking is null)
         {
@@ -176,4 +192,6 @@ public sealed class BookingsController : ControllerBase
 
         return BadRequest(new { message = result.Message });
     }
+
+    private string? GetRequiredUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
 }

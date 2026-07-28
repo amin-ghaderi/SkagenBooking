@@ -37,6 +37,7 @@ public class GetBookingsUseCaseIntegrationTests
 
         await createUseCase.ExecuteAsync(new CreateBookingCommand
         {
+            UserId = "test-user-1",
             PropertyId = 1,
             RoomId = 1,
             CheckInDate = new DateTime(2026, 4, 20, 14, 0, 0),
@@ -48,7 +49,9 @@ public class GetBookingsUseCaseIntegrationTests
         }, CancellationToken.None);
 
         var getUseCase = new GetBookingsUseCase(bookingRepo);
-        var bookings = await getUseCase.ExecuteAsync(new GetBookingsQuery(), CancellationToken.None);
+        var bookings = await getUseCase.ExecuteAsync(
+            new GetBookingsQuery { UserId = "test-user-1" },
+            CancellationToken.None);
 
         Assert.Single(bookings);
         Assert.Equal("Pending", bookings[0].Status);
