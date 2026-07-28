@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkagenBooking.Api.Contracts.Bookings;
 using SkagenBooking.Api.Mapping;
@@ -12,6 +13,7 @@ namespace SkagenBooking.Api.Controllers;
 /// Manages booking lifecycle: create, list, update, and cancel.
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 [Produces("application/json")]
 public sealed class BookingsController : ControllerBase
@@ -22,6 +24,7 @@ public sealed class BookingsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(CreateBookingResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateBookingResponse>> Create(
         [FromBody] CreateBookingRequest request,
@@ -65,6 +68,7 @@ public sealed class BookingsController : ControllerBase
     /// <summary>
     /// Lists all bookings.
     /// </summary>
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<BookingResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<BookingResponse>>> GetAll(
@@ -79,6 +83,7 @@ public sealed class BookingsController : ControllerBase
     /// <summary>
     /// Gets a single booking by id.
     /// </summary>
+    [AllowAnonymous]
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -103,6 +108,7 @@ public sealed class BookingsController : ControllerBase
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Update(
@@ -142,6 +148,7 @@ public sealed class BookingsController : ControllerBase
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Cancel(
         [FromRoute] int id,
