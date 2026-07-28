@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkagenBooking.Application;
 using SkagenBooking.Infrastructure.Composition;
@@ -60,7 +61,16 @@ builder.Services
         options.Password.RequiredLength = 8;
         options.User.RequireUniqueEmail = true;
     })
-    .AddEntityFrameworkStores<SkagenBookingDbContext>();
+    .AddEntityFrameworkStores<SkagenBookingDbContext>()
+    .AddApiEndpoints();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.SlidingExpiration = true;
+});
 
 var app = builder.Build();
 
@@ -99,6 +109,22 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapIdentityApi<ApplicationUser>();
+
+app.MapPost("/logout", async (SignInManager<ApplicationUser> signInManager, [FromBody] object empty) =>
+{
+    if (empty is not null)
+    {
+        await signInManager.SignOutAsync();
+        return Results.Ok();
+    }
+
+    return Results.NotFound();
+}).RequireAuthorization();
 
 app.MapControllers();
 
