@@ -3,6 +3,9 @@ using SkagenBooking.Core.Interfaces;
 
 namespace SkagenBooking.Application.Bookings.Commands.CancelBooking;
 
+/// <summary>
+/// Cancels a booking if it belongs to the current user.
+/// </summary>
 public sealed class CancelBookingUseCase : ICancelBookingUseCase
 {
     private readonly IBookingAggregateRepository _bookingRepository;

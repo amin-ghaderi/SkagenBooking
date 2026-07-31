@@ -10,8 +10,7 @@ using SkagenBooking.Core.ValueObjects;
 namespace SkagenBooking.Application.Bookings.Commands.CreateBooking;
 
 /// <summary>
-/// Application use case that orchestrates booking creation while delegating
-/// business validation to the domain layer.
+/// Creates a booking and associates it with the authenticated user.
 /// </summary>
 public sealed class CreateBookingUseCase : ICreateBookingUseCase
 {

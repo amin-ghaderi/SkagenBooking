@@ -2,6 +2,9 @@ using SkagenBooking.Core.Interfaces;
 
 namespace SkagenBooking.Application.Bookings.Queries.GetBookings;
 
+/// <summary>
+/// Returns bookings owned by the authenticated user.
+/// </summary>
 public sealed class GetBookingsUseCase : IGetBookingsUseCase
 {
     private readonly IBookingAggregateRepository _bookingRepository;

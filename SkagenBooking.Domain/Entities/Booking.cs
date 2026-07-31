@@ -52,7 +52,7 @@ public class Booking : AggregateRoot
     }
 
     /// <summary>
-    /// Associates this booking with an authenticated Identity user id.
+    /// Associates a booking with the authenticated user.
     /// </summary>
     public void AssignOwner(string userId)
     {

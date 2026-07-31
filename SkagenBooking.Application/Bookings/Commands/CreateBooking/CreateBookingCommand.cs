@@ -2,6 +2,9 @@ using SkagenBooking.Application.Abstractions;
 
 namespace SkagenBooking.Application.Bookings.Commands.CreateBooking;
 
+/// <summary>
+/// Command for creating a booking on behalf of an authenticated user.
+/// </summary>
 public sealed class CreateBookingCommand : ICommand<CreateBookingResult>
 {
     public string? UserId { get; init; }

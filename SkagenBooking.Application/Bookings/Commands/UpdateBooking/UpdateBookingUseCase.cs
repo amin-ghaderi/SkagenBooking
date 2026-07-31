@@ -7,6 +7,9 @@ using SkagenBooking.Core.ValueObjects;
 
 namespace SkagenBooking.Application.Bookings.Commands.UpdateBooking;
 
+/// <summary>
+/// Updates a booking after verifying ownership.
+/// </summary>
 public sealed class UpdateBookingUseCase : IUpdateBookingUseCase
 {
     private readonly IBookingAggregateRepository _bookingRepository;
